@@ -14,3 +14,4 @@ function makeFolder(name, basePath) {
 
 // export { makeFolder };
 // Example usage
+module.exports = { makeFolder };

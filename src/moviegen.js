@@ -80,4 +80,4 @@ async function createVideoSlideshow(imagesPath, audioPath, outputPath) {
 }
 
 
-createVideoSlideshow('static/0088dd0/images','static/0088dd0/audio/voiceover.mp3', 'static/0088dd0/video/video.mp4')
+module.exports = { createVideoSlideshow };

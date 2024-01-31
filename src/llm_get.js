@@ -21,7 +21,7 @@ async function get_text(prompt) {
 
 async function get_text_wrapper(prompt) {
     try {
-      const generatedText = await generateText(prompt);
+      const generatedText = await get_text(prompt);
       return generatedText;
     } catch (error) {
       console.error(`Error in get_text_wrapper: ${error.message}`);
@@ -29,3 +29,4 @@ async function get_text_wrapper(prompt) {
     }
   }
 
+module.exports = { get_text_wrapper };

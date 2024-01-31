@@ -75,3 +75,4 @@ async function downloadImages(urlList, outDir) {
 //     .catch(error => console.error(`Error: ${error.message}`));
 
 // export { searchImages, downloadImages };
+module.exports = { searchImages, downloadImages };
