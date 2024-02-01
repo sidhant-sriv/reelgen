@@ -24,6 +24,13 @@ app.use(express.static("./static"));
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
+//sanity check
+app.post("/sanity", (req, res) => {
+  //send the json back
+  res.send(req.body);  
+});
+
+// curl -X POST -H "Content-Type: application/json" -d '{"text":"hello world"}' http://localhost:3000/text
 
 app.post("/text", async (req, res) => {
   const fullUuid = uuidv4();
@@ -51,6 +58,8 @@ app.post("/text", async (req, res) => {
 
   //   await res.send({ text: txt,  user_id: user_id });
 });
+
+// curl -X POST -H "Content-Type: application/json" -d '{"text":"hello world", "user_id":"1234567"}' http://localhost:3000/edittext
 
 app.post("/edittext", async (req, res) => {
   //Get the text from the user and user_id
