@@ -1,4 +1,4 @@
-/text POST
+## /text POST
 
 ```json
 {
@@ -15,7 +15,7 @@ Response:
 }
 ```
 
-/edittext
+## /edittext
 
 ```json
 {
