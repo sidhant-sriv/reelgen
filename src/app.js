@@ -68,7 +68,7 @@ app.post("/edittext", async (req, res) => {
     .catch((error) => console.error(`Error: ${error.message}`));
 });
 
-const server = app.listen(0, () => {
-  const port = 3000;
+const server = app.listen(3000, "0.0.0.0", () => {
+  const port = server.address().port;
   console.log(`app listening on port ${port}!`);
 });
