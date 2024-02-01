@@ -15,7 +15,7 @@ Response:
 }
 ```
 
-## /edittext
+## /edittext POST
 
 ```json
 {
