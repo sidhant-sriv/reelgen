@@ -1,0 +1,19 @@
+version: '3'
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      PEXELSAPI: ${PEXELSAPI}
+      GEMINIAPI: ${GEMINIAPI}
+    volumes:
+      - .:/usr/src/app
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - app

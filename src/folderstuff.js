@@ -1,17 +1,24 @@
-//Write a function that takes a string and makes a folder with that name and makes 3 folders images, audio and video with in the new folder
+// folderstuff.js
+const fs = require("fs");
+const path = require("path");
 
-const fs = require('fs');
-const path = require('path');
-
+/**
+ * Creates a main folder with subfolders for images, audio, and video.
+ * @param {string} name - The name of the main folder.
+ * @param {string} basePath - The base path where the folder will be created.
+ */
 function makeFolder(name, basePath) {
-    const folderPath = path.join(__dirname, basePath, name);
+  const folderPath = path.join(__dirname, basePath, name);
 
-    fs.mkdirSync(folderPath);
-    fs.mkdirSync(path.join(folderPath, 'images'));
-    fs.mkdirSync(path.join(folderPath, 'audio'));
-    fs.mkdirSync(path.join(folderPath, 'video'));
+  try {
+    // Create main folder and subfolders
+    fs.mkdirSync(path.join(folderPath, "images"), { recursive: true });
+    fs.mkdirSync(path.join(folderPath, "audio"), { recursive: true });
+    fs.mkdirSync(path.join(folderPath, "video"), { recursive: true });
+  } catch (error) {
+    console.error(`Error creating folders: ${error.message}`);
+    throw error;
+  }
 }
 
-// export { makeFolder };
-// Example usage
 module.exports = { makeFolder };

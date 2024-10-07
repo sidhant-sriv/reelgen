@@ -1,4 +1,4 @@
-src/static
+src/static/*
 node_modules
 src/.env
 package-lock.json

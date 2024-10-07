@@ -1,83 +1,121 @@
-const videoshow = require('videoshow');
-const fs = require('fs').promises; // Use fs.promises for async file operations
-const path = require('path');
-const sharp = require('sharp');
+// moviegen.js
+const videoshow = require("videoshow");
+const fs = require("fs").promises;
+const path = require("path");
+const sharp = require("sharp");
 
+/**
+ * Resizes images in the specified directory to the given width and height.
+ * Reduces resolution and quality to speed up processing.
+ * @param {string} imagesPath - Path to the directory containing images.
+ * @param {number} resizedWidth - The width to resize images to.
+ * @param {number} resizedHeight - The height to resize images to.
+ * @returns {Promise<void>}
+ */
 async function resizeImages(imagesPath, resizedWidth, resizedHeight) {
-    try {
-        const files = await fs.readdir(imagesPath);
+  try {
+    const files = await fs.readdir(imagesPath);
 
-        // Filter out non-image files
-        await Promise.all(files.map(async (file) => {
-            const extension = path.extname(file).toLowerCase();
-            if (['.jpg', '.jpeg', '.png', '.gif'].includes(extension)) {
-                const imagePath = path.join(imagesPath, file);
-                const resizedImage = await sharp(imagePath)
-                    .resize(resizedWidth, resizedHeight)
-                    .toBuffer();
-                await fs.writeFile(imagePath, resizedImage, 'binary');
-            }
-        }));
-    } catch (error) {
-        console.error('Error resizing images:', error);
-    }
+    // Filter out non-image files and resize images concurrently
+    const imageFiles = files.filter(file => {
+      const extension = path.extname(file).toLowerCase();
+      return [".jpg", ".jpeg", ".png", ".gif"].includes(extension);
+    });
+
+    // Resize images in parallel with reduced quality
+    await Promise.all(
+      imageFiles.map(async (file) => {
+        const imagePath = path.join(imagesPath, file);
+        const tempPath = path.join(imagesPath, `resized_${file}`);
+
+        // Resize and reduce quality (e.g., JPEG quality to 50)
+        await sharp(imagePath)
+          .resize(resizedWidth, resizedHeight, {
+            fit: sharp.fit.cover,
+            withoutEnlargement: true,
+          })
+          .jpeg({ quality: 50 }) // Adjust quality as needed
+          .toFile(tempPath);
+
+        // Replace original image with resized version
+        await fs.unlink(imagePath);
+        await fs.rename(tempPath, imagePath);
+      })
+    );
+
+    console.log("Images resized and optimized for speed.");
+  } catch (error) {
+    console.error("Error resizing images:", error.message);
+    throw error;
+  }
 }
 
+/**
+ * Creates a video slideshow from images and audio with optimized settings.
+ * @param {string} imagesPath - Path to the directory containing images.
+ * @param {string} audioPath - Path to the audio file.
+ * @param {string} outputPath - Path to save the generated video.
+ * @returns {Promise<void>}
+ */
 async function createVideoSlideshow(imagesPath, audioPath, outputPath) {
-    try {
-        // Resize images
-        const resizedWidth = 900;
-        const resizedHeight = 1600;
-        await resizeImages(imagesPath, resizedWidth, resizedHeight);
+  try {
+    // Define lower resolution and minimal transitions for speed
+    const resizedWidth = 640; // Reduced width
+    const resizedHeight = 360; // Reduced height
 
-        // Continue with video creation
-        const images = [];
-        const files = await fs.readdir(imagesPath);
+    // Resize images with optimized settings
+    await resizeImages(imagesPath, resizedWidth, resizedHeight);
 
-        // Filter out non-image files
-        files.forEach(file => {
-            const extension = path.extname(file).toLowerCase();
-            if (['.jpg', '.jpeg', '.png', '.gif'].includes(extension)) {
-                images.push(path.join(imagesPath, file));
-            }
-        });
+    // Gather image paths
+    const files = await fs.readdir(imagesPath);
+    const images = files
+      .filter(file => {
+        const extension = path.extname(file).toLowerCase();
+        return [".jpg", ".jpeg", ".png", ".gif"].includes(extension);
+      })
+      .map(file => path.join(imagesPath, file));
 
-        const videoOptions = {
-            fps: 25,
-            loop: 5,
-            transition: true,
-            transitionDuration: 1,
-            videoBitrate: 1024,
-            videoCodec: 'libx264',
-            size: '640x?',
-            audioBitrate: '128k',
-            audioChannels: 2,
-            format: 'mp4',
-            pixelFormat: 'yuv420p',
-            useSubRipSubtitles: false,
-        };
-
-        await new Promise((resolve, reject) => {
-            videoshow(images, videoOptions)
-                .audio(audioPath)
-                .save(outputPath)
-                .on('start', command => {
-                    console.log(`ffmpeg process started: ${command}`);
-                })
-                .on('error', (err, stdout, stderr) => {
-                    console.error('Error:', err);
-                    console.error('ffmpeg stderr:', stderr);
-                    reject(err);
-                })
-                .on('end', output => {
-                    console.log('Video created in:', output);
-                    resolve();
-                });
-        });
-    } catch (error) {
-        console.error('Error creating video slideshow:', error);
+    if (images.length === 0) {
+      throw new Error("No images found to create a video slideshow.");
     }
-}
 
+    // Define minimal video options for speed
+    const videoOptions = {
+      fps: 15, // Lower frame rate
+      loop: 2, // Shorter display duration per image
+      transition: false, // Remove transitions
+      videoBitrate: 512, // Lower bitrate
+      videoCodec: "libx264",
+      size: `${resizedWidth}x${resizedHeight}`, // Use resized dimensions
+      audioBitrate: "64k", // Lower audio bitrate
+      audioChannels: 1, // Mono audio
+      format: "mp4",
+      pixelFormat: "yuv420p",
+      useSubRipSubtitles: false,
+    };
+
+    // Create the video slideshow
+    await new Promise((resolve, reject) => {
+      videoshow(images, videoOptions)
+        .audio(audioPath)
+        .save(outputPath)
+        .on("start", (command) => {
+          console.log(`FFmpeg process started with command: ${command}`);
+        })
+        .on("error", (err, stdout, stderr) => {
+          console.error("Error creating video slideshow:", err.message);
+          console.error("FFmpeg stderr:", stderr);
+          reject(err);
+        })
+        .on("end", (output) => {
+          console.log("Video created successfully:", output);
+          resolve();
+        });
+    });
+  } catch (error) {
+    console.error("Error in createVideoSlideshow:", error.message);
+    throw error;
+  }
+}
 
 module.exports = { createVideoSlideshow };
